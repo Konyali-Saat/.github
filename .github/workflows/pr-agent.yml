@@ -1,0 +1,26 @@
+name: PR Agent (Reusable)
+
+on:
+  workflow_call:
+    secrets:
+      OPENROUTER__KEY:
+        required: true
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  pr-agent:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.sender.type != 'Bot' }}
+    steps:
+      - name: Run PR Agent
+        uses: qodo-ai/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI__KEY: ${{ secrets.OPENROUTER__KEY }}
+          OPENAI__API_BASE: https://openrouter.ai/api/v1
+          CONFIG__AI__MODEL: qwen/qwen3.6-plus
+          CONFIG__AI__FALLBACK_MODELS: '["deepseek/deepseek-v3.2", "stepfun/step-3.5-flash"]'

@@ -22,6 +22,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI__KEY: ${{ secrets.OPENROUTER__KEY }}
           OPENAI__API_BASE: https://openrouter.ai/api/v1
-          CONFIG__AI__MODEL: qwen/qwen3.6-plus
-          CONFIG__AI__FALLBACK_MODELS: '["deepseek/deepseek-v3.2", "stepfun/step-3.5-flash"]'
+          CONFIG__AI__MODEL: openrouter/qwen/qwen3.6-plus
+          CONFIG__AI__FALLBACK_MODELS: '["openrouter/deepseek/deepseek-v3.2", "openrouter/stepfun/step-3.5-flash"]'
           PR_REVIEWER__HANDLE_PUSH_TRIGGER: 'true'

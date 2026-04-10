@@ -3,7 +3,7 @@ name: PR Agent (Reusable)
 on:
   workflow_call:
     secrets:
-      OPENROUTER__KEY:
+      OPENROUTER_KEY:
         required: true
 
 permissions:
@@ -20,8 +20,12 @@ jobs:
         uses: qodo-ai/pr-agent@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI__KEY: ${{ secrets.OPENROUTER__KEY }}
-          OPENAI__API_BASE: https://openrouter.ai/api/v1
-          CONFIG__AI__MODEL: openrouter/qwen/qwen3.6-plus
-          CONFIG__AI__FALLBACK_MODELS: '["openrouter/deepseek/deepseek-v3.2", "openrouter/stepfun/step-3.5-flash"]'
-          PR_REVIEWER__HANDLE_PUSH_TRIGGER: 'true'
+          OPENAI_KEY: ${{ secrets.OPENROUTER_KEY }}
+          OPENAI.API_BASE: https://openrouter.ai/api/v1
+          config.model: "openrouter/qwen/qwen3.6-plus"
+          config.fallback_models: '["openrouter/deepseek/deepseek-v3.2", "openrouter/stepfun/step-3.5-flash"]'
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'
+          pr_reviewer.handle_push_trigger: "true"

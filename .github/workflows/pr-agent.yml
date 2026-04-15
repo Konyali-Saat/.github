@@ -14,13 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: PR Agent Review
-        uses: qodo-ai/pr-agent@main
+        uses: docker://codiumai/pr-agent:0.30-github_action
         env:
           OPENAI_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENAI_API_BASE: "https://openrouter.ai/api/v1"
           OPENAI_MODEL: "anthropic/claude-sonnet-4-20250514"
-          CONFIG.PR_DESCRIPTION: "true"
-          CONFIG.PR_REVIEW: "true"
-          CONFIG.PR_CODE_SUGGESTIONS: "true"
-        with:
-          args: "--pr_url ${{ github.event.pull_request.html_url }}"
+          GITHUB_TOKEN: ${{ github.token }}
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"

@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: PR Agent Review
-        uses: Codium-ai/pr-agent@main
+        uses: qodo-ai/pr-agent@main
         env:
           OPENAI_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENAI_API_BASE: "https://openrouter.ai/api/v1"

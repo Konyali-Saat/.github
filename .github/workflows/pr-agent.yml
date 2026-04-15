@@ -1,31 +1,32 @@
-name: PR Agent (Reusable)
+name: PR Agent Review
 
 on:
   workflow_call:
     secrets:
-      OPENROUTER_KEY:
+      OPENROUTER_API_KEY:
+        description: "OpenRouter API key for PR-Agent"
         required: true
 
 permissions:
-  issues: write
-  pull-requests: write
   contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
   pr-agent:
     runs-on: ubuntu-latest
-    if: ${{ github.event.sender.type != 'Bot' }}
+    timeout-minutes: 10
+    if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - name: Run PR Agent
-        uses: qodo-ai/pr-agent@main
+      - uses: actions/checkout@v4
+      - name: PR Agent Review
+        uses: Codium-ai/pr-agent@main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENROUTER.KEY: ${{ secrets.OPENROUTER_KEY }}
-          config.model: "openrouter/minimax/minimax-m2.7"
-          config.fallback_models: '["openrouter/deepseek/deepseek-v3.2", "openrouter/stepfun/step-3.5-flash"]'
-          config.custom_model_max_tokens: "131072"
-          github_action_config.auto_review: "true"
-          github_action_config.auto_describe: "false"
-          github_action_config.auto_improve: "false"
-          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review", "synchronize"]'
-          pr_reviewer.handle_push_trigger: "true"
+          OPENAI_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_BASE: "https://openrouter.ai/api/v1"
+          OPENAI_MODEL: "anthropic/claude-sonnet-4-20250514"
+          CONFIG.PR_DESCRIPTION: "true"
+          CONFIG.PR_REVIEW: "true"
+          CONFIG.PR_CODE_SUGGESTIONS: "true"
+        with:
+          args: "--pr_url ${{ github.event.pull_request.html_url }}"

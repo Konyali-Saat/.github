@@ -1,0 +1,67 @@
+name: CI Python
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version"
+        type: string
+        default: "3.12"
+      run-lint:
+        description: "Run lint job"
+        type: boolean
+        default: true
+      run-tests:
+        description: "Run test job"
+        type: boolean
+        default: true
+      lint-command:
+        description: "Custom lint command"
+        type: string
+        default: "ruff check . && ruff format --check ."
+      test-command:
+        description: "Custom test command"
+        type: string
+        default: "pytest -v"
+      requirements-file:
+        description: "Path to requirements file"
+        type: string
+        default: "requirements.txt"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    if: ${{ inputs.run-lint }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r ${{ inputs.requirements-file }}
+      - name: Run linter
+        run: ${{ inputs.lint-command }}
+
+  test:
+    if: ${{ inputs.run-tests }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r ${{ inputs.requirements-file }}
+      - name: Run tests
+        run: ${{ inputs.test-command }}

@@ -1,0 +1,72 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Cloud Run service name"
+        required: true
+        type: string
+      region:
+        description: "GCP region"
+        type: string
+        default: "europe-west1"
+      dockerfile:
+        description: "Path to Dockerfile"
+        type: string
+        default: "Dockerfile"
+      environment:
+        description: "Deploy environment label"
+        type: string
+        default: "production"
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "projects/518226731997/locations/global/workloadIdentityPools/github-pool/providers/github-provider-new"
+          service_account: "github-actions-sa@konyali-saat-etl.iam.gserviceaccount.com"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE="europe-west1-docker.pkg.dev/konyali-saat-etl/images/${{ inputs.service-name }}:${{ github.sha }}"
+          docker build -t "$IMAGE" -f ${{ inputs.dockerfile }} .
+          docker push "$IMAGE"
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE="europe-west1-docker.pkg.dev/konyali-saat-etl/images/${{ inputs.service-name }}:${{ github.sha }}"
+          gcloud run deploy ${{ inputs.service-name }} \
+            --image "$IMAGE" \
+            --region ${{ inputs.region }} \
+            --platform managed \
+            --quiet
+
+      - name: Show rollback command
+        if: always()
+        run: |
+          echo "--- ROLLBACK COMMAND (if needed) ---"
+          echo "gcloud run services update-traffic ${{ inputs.service-name }} --region=${{ inputs.region }} --to-revisions=PREVIOUS_REVISION=100"
+          echo "------------------------------------"

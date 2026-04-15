@@ -1,0 +1,118 @@
+name: CI Node.js
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node.js version"
+        type: string
+        default: "22"
+      run-lint:
+        description: "Run lint job"
+        type: boolean
+        default: true
+      run-type-check:
+        description: "Run type-check job (TypeScript)"
+        type: boolean
+        default: true
+      run-tests:
+        description: "Run test job"
+        type: boolean
+        default: true
+      run-build:
+        description: "Run build job (Next.js/Vite)"
+        type: boolean
+        default: true
+      lint-command:
+        description: "Custom lint command"
+        type: string
+        default: "npx eslint . --format=stylish"
+      test-command:
+        description: "Custom test command"
+        type: string
+        default: "npm test -- --verbose --coverage"
+      build-command:
+        description: "Custom build command"
+        type: string
+        default: "npm run build"
+      is-nextjs:
+        description: "Enable Next.js build cache"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    if: ${{ inputs.run-lint }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Run linter
+        run: ${{ inputs.lint-command }}
+
+  type-check:
+    if: ${{ inputs.run-type-check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Run TypeScript compiler check
+        run: npx tsc --noEmit
+
+  test:
+    if: ${{ inputs.run-tests }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: ${{ inputs.test-command }}
+
+  build:
+    if: ${{ inputs.run-build }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Restore Next.js build cache
+        if: ${{ inputs.is-nextjs }}
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/*.css') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+      - name: Build application
+        run: ${{ inputs.build-command }}

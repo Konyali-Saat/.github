@@ -22,7 +22,7 @@ on:
       allow-unauthenticated:
         description: "Allow unauthenticated access to the Cloud Run service"
         type: boolean
-        default: false
+        default: true
 
 concurrency:
   group: deploy-${{ github.ref }}

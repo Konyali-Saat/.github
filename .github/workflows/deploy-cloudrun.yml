@@ -19,6 +19,10 @@ on:
         description: "Deploy environment label"
         type: string
         default: "production"
+      allow-unauthenticated:
+        description: "Allow unauthenticated access to the Cloud Run service"
+        type: boolean
+        default: false
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -58,10 +62,12 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           IMAGE="europe-west1-docker.pkg.dev/konyali-saat-etl/images/${{ inputs.service-name }}:${{ github.sha }}"
+          UNAUTH_FLAG=$( [ "${{ inputs.allow-unauthenticated }}" = "true" ] && echo "--allow-unauthenticated" || echo "--no-allow-unauthenticated" )
           gcloud run deploy ${{ inputs.service-name }} \
             --image "$IMAGE" \
             --region ${{ inputs.region }} \
             --platform managed \
+            $UNAUTH_FLAG \
             --quiet
 
       - name: Show rollback command
